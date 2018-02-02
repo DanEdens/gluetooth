@@ -1,8 +1,8 @@
 # Gluetooth
 
-Keymapping bridge between HTML5 GamePad API.
+Bridge between HTML5 GamePad API and RobotJS.
 
-Originally used for making MOCUTE conttrollers play well with OpenEMU.
+Originally used for making MOCUTE controllers do a little more...
 
 Also includes some Bluetooth service probing tests for the Gear VR controller. 
 

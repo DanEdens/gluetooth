@@ -18,6 +18,9 @@ const CHARACTERISTICS = {
         ['C8C51726-81BC-483B-A052-F7A14EA3D282', '???']
     ],
 
+    // https://www.bluetooth.com/specifications/assigned-numbers/16-bit-uuids-for-members
+    // ???
+    // "Dialog Semiconductor GmbH" ???
     'FEF5': [
         ['8082CAA8-41A6-4021-91C6-56F9B954CC34', '???'],
         ['724249F0-5EC3-4B5F-8804-42345AF08651', '???'],
@@ -55,9 +58,9 @@ function getCharacteristic(serviceUUID, index) {
 const SERVICES = {
     BATTERY_SERVICE:    '180F',
     DEVICE_INFORMATION: '180A',
-    UNKNOWN2:           '1879',
-    UNKNOWN3:           '4F63756C-7573-2054-6872-65656D6F7465',
-    UNKNOWN4:           'FEF5',
+    UNKNOWN1:           '1879',
+    UNKNOWN2:           '4F63756C-7573-2054-6872-65656D6F7465',
+    UNKNOWN3:           'FEF5',
 };
 
 const getUUID = uuid => uuid.length === 4 ? eval(`0x${uuid}`) : uuid.toLowerCase();

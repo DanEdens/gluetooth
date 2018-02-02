@@ -23,6 +23,11 @@ const onDeviceDisconnected = ({target}) => {
 
 
 let gattServer;
+const userSelection = {
+    service:             SERVICES.UNKNOWN1,
+    characteristicIndex: 1,
+    characteristicRef:   null
+};
 
 // 2B
 const onDeviceConnected = server => {
@@ -32,7 +37,7 @@ const onDeviceConnected = server => {
     gattServer                = server;
 
     return server.getPrimaryService(
-        getUUID(SERVICES.BATTERY_SERVICE)
+        getUUID(userSelection.service)
     );
 };
 
@@ -40,18 +45,53 @@ const onDeviceConnected = server => {
 const onServiceRetrieved = service => {
     logMessage(`Service retrieved.`);
 
+    userSelection.characteristicIndex = parseFloat(
+        prompt(
+            [
+                `Characteristics of service ${userSelection.service}:`,
+                CHARACTERISTICS[userSelection.service]
+                    .map((row, i) => `${i} = ${row[0]}`)
+                    .join('\n')
+            ].join('\n\n'),
+            userSelection.characteristicIndex.toString()
+        )
+    );
+
     return service.getCharacteristic(
-        getUUID(getCharacteristic(SERVICES.BATTERY_SERVICE, 0))
+        getUUID(getCharacteristic(userSelection.service, userSelection.characteristicIndex))
     );
 };
 
+
 const onCharacteristicRetrieved = characteristic => {
     characteristic.addEventListener('characteristicvaluechanged', onValueChanged);
-    return characteristic.readValue();
+    logMessage(`Characteristic event listener active!`);
+
+    userSelection.characteristicRef = characteristic;
+
+    return characteristic.readValue()
+        .then(onCharacteristicRead);
 };
 
+let prevUI8A;
+
 const onCharacteristicRead = value => {
-    logMessage(`Characteristic read: ${value ? value.getUint8(0) : value}`);
+//    logMessage(`Characteristic read:`);
+
+
+    const ui8a = new Uint8Array(value.buffer);
+    if (prevUI8A) {
+        let difference = prevUI8A.filter(x => !ui8a.includes(x));
+        if (difference.length) {
+            console.log(`Diff: ${difference}`);
+        }
+    }
+
+    prevUI8A = ui8a;
+//    logMessage(value ? value.getUint8(0) : value);
+
+    userSelection.characteristicRef.readValue()
+        .then(onCharacteristicRead);
 };
 
 
@@ -77,7 +117,6 @@ const onClickScan = () => {
         .then(onDeviceConnected)
         .then(onServiceRetrieved)
         .then(onCharacteristicRetrieved)
-        .then(onCharacteristicRead)
     ;
 };
 

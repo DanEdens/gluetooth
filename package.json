@@ -1,0 +1,19 @@
+{
+  "name": "gluetooth",
+  "version": "0.1",
+  "description": "Keymapping bridge between HTML5 GamePad API",
+  "author": {
+    "name": "jsyang.ca@gmail.com",
+    "url": "http://jsyang.ca/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jsyang/gluetooth.git"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "node-web-bluetooth": "^0.0.7",
+    "robotjs": "^0.4.7",
+    "websocket": "^1.0.25"
+  }
+}

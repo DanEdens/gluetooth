@@ -1,0 +1,115 @@
+<html>
+<script>
+    const AXES_ACTIVATION_VALUE = 0.1;
+    const AXES_MIN_VALUE        = 0.000001;
+
+    const getAnalogAnle = (dx = 0, dy = 0) => {
+        dx = dx > 0 ? AXES_MIN_VALUE : -AXES_MIN_VALUE;
+        dy = dy > 0 ? AXES_MIN_VALUE : -AXES_MIN_VALUE;
+
+        return Math.atan2(dy, dx);
+    };
+
+    function getEvents(id = 0) {
+        const gp = navigator.getGamepads()[id];
+
+        if (gp) {
+            return {
+                left:  gp.axes[0] < -AXES_ACTIVATION_VALUE,
+                right: gp.axes[0] > AXES_ACTIVATION_VALUE,
+                up:    gp.axes[1] < -AXES_ACTIVATION_VALUE,
+                down:  gp.axes[1] > AXES_ACTIVATION_VALUE,
+
+                button0: gp.buttons[0].pressed,
+                button1: gp.buttons[1].pressed,
+
+                button3: gp.buttons[3].pressed,
+                button4: gp.buttons[4].pressed
+            };
+        }
+    }
+
+    function sendKeyPress(inputState = {}) {
+        const {button0, button1, button3, button4, left, right, up, down} = inputState;
+
+        // A
+        if (button0) {
+            SeleniumJavaRobot.keyPress(65);
+            SeleniumJavaRobot.keyRelease(65);
+        }
+
+        // Z
+        if (button1) {
+            SeleniumJavaRobot.keyPress(90);
+            SeleniumJavaRobot.keyRelease(90);
+        }
+
+        // ENTER
+        if (button3) {
+            SeleniumJavaRobot.keyPress(10);
+            SeleniumJavaRobot.keyRelease(10);
+        }
+
+        // CTRL
+        if (button4) {
+            SeleniumJavaRobot.keyPress(17);
+            SeleniumJavaRobot.keyRelease(17);
+        }
+
+        if (up) {
+            SeleniumJavaRobot.keyPress(38);
+            SeleniumJavaRobot.keyRelease(38);
+        }
+
+        if (down) {
+            SeleniumJavaRobot.keyPress(40);
+            SeleniumJavaRobot.keyRelease(40);
+        }
+
+        if (left) {
+            SeleniumJavaRobot.keyPress(37);
+            SeleniumJavaRobot.keyRelease(37);
+        }
+
+        if (right) {
+            SeleniumJavaRobot.keyPress(39);
+            SeleniumJavaRobot.keyRelease(39);
+        }
+    }
+
+    let raf;  // requestAnimationFrame request
+    let then; // Time stamp of last animation frame
+
+    // Update the input state at 60FPS
+    const FPS          = 60;
+    const FPS_INTERVAL = 1000 / FPS;
+
+    function step() {
+        const now     = Date.now();
+        const elapsed = now - then;
+
+        if (elapsed > FPS_INTERVAL) {
+            const inputState = getEvents(0);
+
+            if (inputState) {
+                //sendKeyPress(inputState);
+               sock.send(JSON.stringify(inputState));
+            }
+
+            then = now - (elapsed % FPS_INTERVAL);
+        }
+
+        raf = requestAnimationFrame(step);
+    }
+
+    function start() {
+        then = Date.now();
+        step();
+    }
+
+    const sock   = new WebSocket("ws://localhost:9000", 'gluetooth');
+    sock.onerror = () => alert('Connection Error');
+    sock.onopen  = start;
+
+</script>
+</html>

@@ -1,13 +1,83 @@
 <html>
+<style>
+    button {
+        padding: 1em;
+        margin: 0.25em;
+    }
+
+    code {
+        display: inline-block;
+        min-width: 32px;
+        font-size: 0.7em;
+    }
+
+    #touchpadDisplay {
+        position: relative;
+        display: block;
+        width: 160px;
+        height: 160px;
+        background: gray;
+    }
+
+    #touchpadDisplayDot {
+        display: block;
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        border-radius: 16px;
+        background: red;
+    }
+
+    #touchpadMaxValuesDisplay,
+    #eventDataHexDisplay,
+    #eventDataDisplay,
+    #logDisplay {
+        font-family: monospace;
+    }
+</style>
 <button onclick="onClickScan()">Scan for Gear VR Controllers</button>
+
+<br>
 <button id="disconnectButton" disabled onclick="onClickDisconnect()">Disconnect</button>
 <br>
-<div id="valueDisplay" style="font-family: monospace">
-    <b>Log</b>
+<button id="setOffModeButton" disabled onclick="onClickSetOffMode()">Set OFF mode</button>
+<button id="setSensorModeButton" disabled onclick="onClickSetSensorMode()">Set SENSOR mode</button>
+<button id="setVRModeButton" disabled onclick="onClickSetVRMode()">Set VR mode</button>
+
+<hr>
+
+<b>Touchpad</b>
+
+<div id="touchpadDisplay">
+    <div id="touchpadDisplayDot"></div>
 </div>
+
+<b>Touchpad max values</b>
+
+<div id="touchpadMaxValuesDisplay"></div>
+
+<hr>
+
+<b>Controller buttons</b>
+
+<div id="controllerButtonsDisplay"></div>
+
+<hr>
+
+<b>Event Data</b>
+<div id="eventDataDisplay"></div>
+
+<br>
+
+<b>Event Data (hex)</b>
+<div id="eventDataHexDisplay"></div>
+
+<hr>
+
+<div id="logDisplay"><b>Log</b></div>
+
 <script src="arrayBufferToString.js"></script>
 <script src="gear-vr-controller.services.js"></script>
 <script src="gear-vr-controller.bluetooth.js"></script>
-
-
 </html>

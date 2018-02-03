@@ -65,4 +65,27 @@ const SERVICES = {
     UNKNOWN:            '1879'
 };
 
+const MODES = {
+    OFF_MODE:                     '0000',
+    SENSOR_MODE:                  '0100',
+    UNKNOWN_FIRMWARE_UPDATE_MODE: '0200',
+    CALIBRATE_MODE:               '0300',
+    KEEP_ALIVE_MODE:              '0400',
+    UNKNOWN_SETTING_MODE:         '0500',
+    UNKNOWN_LPM_ENABLE_MODE:      '0600',
+    UNKNOWN_LPM_DISABLE_MODE:     '0700',
+    VR_MODE:                      '0800'
+};
+
 const getUUID = uuid => uuid.length === 4 ? eval(`0x${uuid}`) : uuid.toLowerCase();
+
+// CUSTOM_SERVICE.WRITE characteristic expects LE ints
+const getLittleEndianUint8Array = hexString => {
+    const leAB = new Uint8Array(hexString.length >> 1);
+
+    for (let i = 0, j = 0; i + 2 <= hexString.length; i += 2, j++) {
+        leAB[j] = parseInt(hexString.substr(i, 2), 16);
+    }
+
+    return leAB;
+};

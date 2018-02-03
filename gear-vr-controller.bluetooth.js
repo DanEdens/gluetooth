@@ -1,113 +1,179 @@
-const valueDisplay     = document.getElementById('valueDisplay');
-const disconnectButton = document.getElementById('disconnectButton');
+const logDisplay          = document.getElementById('logDisplay');
+const eventDataDisplay    = document.getElementById('eventDataDisplay');
+const eventDataHexDisplay = document.getElementById('eventDataHexDisplay');
+
+const touchpadDisplayDotStyle  = document.getElementById('touchpadDisplayDot').style;
+const touchpadMaxValuesDisplay = document.getElementById('touchpadMaxValuesDisplay');
+
+const controllerButtonsDisplay = document.getElementById('controllerButtonsDisplay');
+
+
+const setOffModeButton    = document.getElementById('setOffModeButton');
+const setSensorModeButton = document.getElementById('setSensorModeButton');
+const setVRModeButton     = document.getElementById('setVRModeButton');
+const disconnectButton    = document.getElementById('disconnectButton');
+
+// Event data byte view
+(() => {
+    for (let i = 0; i < 60; i++) {
+        let codeElement;
+
+        codeElement   = document.createElement('code');
+        codeElement.title = `Byte ${i}`;
+        eventDataDisplay.appendChild(codeElement);
+
+        codeElement       = document.createElement('code');
+        codeElement.title = `Byte ${i}`;
+        eventDataHexDisplay.appendChild(codeElement);
+
+    }
+})();
 
 const logMessage = message => {
-    valueDisplay.innerHTML += '<br>' + message;
+    logDisplay.innerHTML += '<br>' + message;
     console.log(message);
 };
 
-// 1
+const logEventData = eventData => {
+    eventData.forEach((v, i) => {
+        eventDataHexDisplay.children[i].innerHTML = v.toString(16).padStart(2, '0');
+        eventDataDisplay.children[i].innerHTML    = v;
+    });
+};
+
+const logTouchPadValues = ({axisY, axisX}) => {
+    touchpadDisplayDotStyle.top  = axisY + 'px';
+    touchpadDisplayDotStyle.left = axisX + 'px';
+
+    maxValues.axisX = Math.max(maxValues.axisX, axisX);
+    maxValues.axisY = Math.max(maxValues.axisY, axisY);
+
+    touchpadMaxValuesDisplay.innerHTML = `Max X = ${maxValues.axisX}\nMax Y = ${maxValues.axisY}`;
+};
+
+const logControllerButtons = ({backButton, homeButton, volumeUpButton, volumeDownButton, triggerButton, touchpadButton}) =>
+    controllerButtonsDisplay.innerHTML = [
+        `Touchpad button = ${touchpadButton}`,
+        `Back button = ${backButton}`,
+        `Home button = ${homeButton}`,
+        `Volume up button = ${volumeUpButton}`,
+        `Volume down button = ${volumeDownButton}`,
+        `Trigger button = ${triggerButton}`
+    ].join('<br>');
+
+let gattServer;
+let customService;
+let customServiceNotify;
+let customServiceWrite;
+
+const userSelection = {
+    service: SERVICES.CUSTOM_SERVICE,
+};
+
+const NOTIFY_CHARACTERISTIC = getCharacteristic(SERVICES.CUSTOM_SERVICE, 0);
+const WRITE_CHARACTERISTIC  = getCharacteristic(SERVICES.CUSTOM_SERVICE, 1);
+
 const onDevicePaired = device => {
     logMessage(`${device.name} paired.`);
-
     device.addEventListener('gattserverdisconnected', onDeviceDisconnected);
-
     return device.gatt.connect();
 };
 
-// 2A
 const onDeviceDisconnected = ({target}) => {
     logMessage(`${target.name} disconnected.`);
-    disconnectButton.disabled = true;
+    disconnectButton.disabled    = true;
+    setSensorModeButton.disabled = true;
+    setOffModeButton.disabled    = true;
+    setVRModeButton.disabled     = true;
 };
 
-
-let gattServer;
-const userSelection = {
-    service:             SERVICES.UNKNOWN1,
-    characteristicIndex: 1,
-    characteristicRef:   null
-};
-
-// 2B
 const onDeviceConnected = server => {
-    logMessage(`(ID ${server.device.id}) GATT connected.`);
+    logMessage('GATT server connected.');
 
-    disconnectButton.disabled = false;
-    gattServer                = server;
-
-    window.foo = server;
+    disconnectButton.disabled    = false;
+    setSensorModeButton.disabled = false;
+    setOffModeButton.disabled    = false;
+    setVRModeButton.disabled     = false;
+    gattServer                   = server;
 
     return server.getPrimaryService(
         getUUID(userSelection.service)
     );
 };
 
-// 3
 const onServiceRetrieved = service => {
-    logMessage(`Service retrieved.`);
+    logMessage(`Service ${userSelection.service} retrieved.`);
 
-    userSelection.characteristicIndex = parseFloat(
-        prompt(
-            [
-                `Characteristics of service ${userSelection.service}:`,
-                CHARACTERISTICS[userSelection.service]
-                    .map((row, i) => `${i} = ${row[0]}`)
-                    .join('\n')
-            ].join('\n\n'),
-            userSelection.characteristicIndex.toString()
-        )
-    );
+    customService = service;
 
-    return service.getCharacteristic(
-        getUUID(getCharacteristic(userSelection.service, userSelection.characteristicIndex))
-    );
+    return customService.getCharacteristic(WRITE_CHARACTERISTIC);
 };
 
 
-const onCharacteristicRetrieved = characteristic => {
-    characteristic.addEventListener('characteristicvaluechanged', onValueChanged);
-    logMessage(`Characteristic event listener active!`);
-
-    userSelection.characteristicRef = characteristic;
-
-    return characteristic.readValue()
-        .then(onCharacteristicRead);
+const onWriteCharacteristicRetrieved = characteristic => {
+    customServiceWrite = characteristic;
+    return customService.getCharacteristic(NOTIFY_CHARACTERISTIC);
 };
 
-let prevUI8A;
-
-const onCharacteristicRead = value => {
-//    logMessage(`Characteristic read:`);
-
-
-    const ui8a = new Uint8Array(value.buffer);
-    if (prevUI8A) {
-        let difference = prevUI8A.filter(x => !ui8a.includes(x));
-        if (difference.length) {
-            console.log(`Diff: ${difference}`);
-        }
-    }
-
-    prevUI8A = ui8a;
-//    logMessage(value ? value.getUint8(0) : value);
-
-    userSelection.characteristicRef.readValue()
-        .then(onCharacteristicRead);
+const onNotifyCharacteristicRetrieved = characteristic => {
+    customServiceNotify = characteristic;
+    customServiceNotify
+        .startNotifications()
+        .then(() => customServiceNotify.addEventListener('characteristicvaluechanged', onEventDataChanged));
 };
 
+const maxValues = {
+    axisX: 0,
+    axisY: 0,
+};
 
-function onValueChanged({target}) {
-    if (target.value) {
-        const {buffer} = target.value.buffer;
+function onEventDataChanged(e) {
+    const {buffer}  = e.target.value;
+    const eventData = new Uint8Array(buffer);
 
-        if (!buffer) return;
+    let axisY = 0; // Max is 157
+    let axisX = 0; // Max is 157
 
-        const ascii  = arrayBufferToString(buffer);
-        const values = Array.prototype.map.call(buffer, (val, i) => val.getUint8(i));
+    axisX += eventData[54] & (1 << 0) ? (1 << 5) : 0;
+    axisX += eventData[54] & (1 << 1) ? (1 << 6) : 0;
+    axisX += eventData[54] & (1 << 2) ? (1 << 7) : 0;
+    axisX += eventData[55] & (1 << 3) ? (1 << 0) : 0;
+    axisX += eventData[55] & (1 << 4) ? (1 << 1) : 0;
+    axisX += eventData[55] & (1 << 5) ? (1 << 2) : 0;
+    axisX += eventData[55] & (1 << 6) ? (1 << 3) : 0;
+    axisX += eventData[55] & (1 << 7) ? (1 << 4) : 0;
 
-        logMessage(`characteristicvaluechanged => ${ascii}<br>${values}`);
-    }
+    axisY += eventData[55] & (1 << 0) ? (1 << 7) : 0;
+    axisY += eventData[56] & (1 << 1) ? (1 << 0) : 0;
+    axisY += eventData[56] & (1 << 2) ? (1 << 1) : 0;
+    axisY += eventData[56] & (1 << 3) ? (1 << 2) : 0;
+    axisY += eventData[56] & (1 << 4) ? (1 << 3) : 0;
+    axisY += eventData[56] & (1 << 5) ? (1 << 4) : 0;
+    axisY += eventData[56] & (1 << 6) ? (1 << 5) : 0;
+    axisY += eventData[56] & (1 << 7) ? (1 << 6) : 0;
+
+    const triggerButton    = Boolean(eventData[58] & (1 << 0));
+    const homeButton       = Boolean(eventData[58] & (1 << 1));
+    const backButton       = Boolean(eventData[58] & (1 << 2));
+    const touchpadButton   = Boolean(eventData[58] & (1 << 3));
+    const volumeUpButton   = Boolean(eventData[58] & (1 << 4));
+    const volumeDownButton = Boolean(eventData[58] & (1 << 5));
+
+    const structuredEventData = {
+        axisX,
+        axisY,
+        triggerButton,
+        homeButton,
+        backButton,
+        touchpadButton,
+        volumeUpButton,
+        volumeDownButton
+    };
+
+    logTouchPadValues(structuredEventData);
+    logControllerButtons(structuredEventData);
+
+    logEventData(eventData);
 }
 
 const onClickScan = () => {
@@ -118,8 +184,27 @@ const onClickScan = () => {
         .then(onDevicePaired)
         .then(onDeviceConnected)
         .then(onServiceRetrieved)
-        .then(onCharacteristicRetrieved)
+        .then(onWriteCharacteristicRetrieved)
+        .then(onNotifyCharacteristicRetrieved)
     ;
 };
+
+const onClickSetSensorMode = () =>
+    customServiceWrite
+        .writeValue(getLittleEndianUint8Array(MODES.SENSOR_MODE))
+        .then(() => logMessage('Device set to SENSOR mode!'))
+        .catch(e => logMessage(`Error: ${e}`));
+
+const onClickSetOffMode = () =>
+    customServiceWrite
+        .writeValue(getLittleEndianUint8Array(MODES.OFF_MODE))
+        .then(() => logMessage('Device set to OFF mode!'))
+        .catch(e => logMessage(`Error: ${e}`));
+
+const onClickSetVRMode = () =>
+    customServiceWrite
+        .writeValue(getLittleEndianUint8Array(MODES.VR_MODE))
+        .then(() => logMessage('Device set to VR mode!'))
+        .catch(e => logMessage(`Error: ${e}`));
 
 const onClickDisconnect = () => gattServer && gattServer.disconnect();

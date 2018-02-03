@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git://github.com/jsyang/gluetooth.git"
   },
+  "scripts": {
+    "start": "node ."
+  },
   "main": "index.js",
   "dependencies": {
     "node-web-bluetooth": "^0.0.7",

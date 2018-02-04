@@ -11,12 +11,29 @@
         font-size: 0.7em;
     }
 
+    code:nth-child(4n+1) {
+        background: rgb(255, 200, 200);
+    }
+
     #touchpadDisplay {
         position: relative;
         display: block;
         width: 160px;
         height: 160px;
+        margin: 8px;
         background: gray;
+    }
+
+    #touchpadDisplay::before {
+        display: block;
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 160px;
+        border: 2px solid rgb(20, 20, 20);
     }
 
     #touchpadDisplayDot {
@@ -35,49 +52,65 @@
     #logDisplay {
         font-family: monospace;
     }
+
+    canvas {
+        background: gray;
+    }
 </style>
 <button onclick="onClickScan()">Scan for Gear VR Controllers</button>
-
-<br>
 <button id="disconnectButton" disabled onclick="onClickDisconnect()">Disconnect</button>
 <br>
 <button id="setOffModeButton" disabled onclick="onClickSetOffMode()">Set OFF mode</button>
 <button id="setSensorModeButton" disabled onclick="onClickSetSensorMode()">Set SENSOR mode</button>
 <button id="setVRModeButton" disabled onclick="onClickSetVRMode()">Set VR mode</button>
+<br>
+<button id="setFloatValueButton" onclick="window.floatOffset = parseInt(prompt('Float offset', window.floatOffset))">Set
+    float3 offset value
+</button>
 
 <hr>
 
-<b>Touchpad</b>
+<div>
+    <div style="float: left; width:50%">
+        <b>Touchpad</b>
+        <div id="touchpadDisplay">
+            <div id="touchpadDisplayDot"></div>
+        </div>
 
-<div id="touchpadDisplay">
-    <div id="touchpadDisplayDot"></div>
+        <b>Touchpad max values</b>
+        <div id="touchpadMaxValuesDisplay"></div>
+    </div>
+
+    <div style="float: left; width:50%">
+        <b>Controller buttons</b>
+        <div id="controllerButtonsDisplay"></div>
+    </div>
+
+    <div style="clear: both"></div>
 </div>
-
-<b>Touchpad max values</b>
-
-<div id="touchpadMaxValuesDisplay"></div>
-
-<hr>
-
-<b>Controller buttons</b>
-
-<div id="controllerButtonsDisplay"></div>
 
 <hr>
 
 <b>Event Data</b>
 <div id="eventDataDisplay"></div>
+<canvas id="eventDataHistogramDisplay" width="1200" height="200"></canvas>
 
 <br>
 
 <b>Event Data (hex)</b>
 <div id="eventDataHexDisplay"></div>
+<br>
+
+<b>Event Data (3 floats)</b>
+<div id="eventData3FloatDisplay"></div>
+<br>
 
 <hr>
 
 <div id="logDisplay"><b>Log</b></div>
 
 <script src="arrayBufferToString.js"></script>
+<script src="histogram.js"></script>
 <script src="gear-vr-controller.services.js"></script>
 <script src="gear-vr-controller.bluetooth.js"></script>
 </html>

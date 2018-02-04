@@ -1,6 +1,7 @@
-const logDisplay          = document.getElementById('logDisplay');
-const eventDataDisplay    = document.getElementById('eventDataDisplay');
-const eventDataHexDisplay = document.getElementById('eventDataHexDisplay');
+const logDisplay             = document.getElementById('logDisplay');
+const eventDataDisplay       = document.getElementById('eventDataDisplay');
+const eventDataHexDisplay    = document.getElementById('eventDataHexDisplay');
+const eventData3FloatDisplay = document.getElementById('eventData3FloatDisplay');
 
 const touchpadDisplayDotStyle  = document.getElementById('touchpadDisplayDot').style;
 const touchpadMaxValuesDisplay = document.getElementById('touchpadMaxValuesDisplay');
@@ -18,7 +19,7 @@ const disconnectButton    = document.getElementById('disconnectButton');
     for (let i = 0; i < 60; i++) {
         let codeElement;
 
-        codeElement   = document.createElement('code');
+        codeElement       = document.createElement('code');
         codeElement.title = `Byte ${i}`;
         eventDataDisplay.appendChild(codeElement);
 
@@ -40,6 +41,15 @@ const logEventData = eventData => {
         eventDataDisplay.children[i].innerHTML    = v;
     });
 };
+
+const logEventData3Float = float3 => {
+    eventData3FloatDisplay.innerHTML = [
+        `X = ${float3[0]}`,
+        `Y = ${float3[1]}`,
+        `Z = ${float3[2]}`,
+    ].join('<br>');
+};
+
 
 const logTouchPadValues = ({axisY, axisX}) => {
     touchpadDisplayDotStyle.top  = axisY + 'px';
@@ -127,8 +137,25 @@ const maxValues = {
     axisY: 0,
 };
 
+const getFloatFrom4Bytes = arrayBuffer4bytes => {
+    const data = new Uint8Array(arrayBuffer4bytes);
+
+    const arrayBuffer = new ArrayBuffer(4);
+    const view        = new DataView(arrayBuffer);
+    data.forEach((b, i) => {
+        view.setUint8(3 - i, b);
+        //view.setUint8(i, b);
+    });
+
+    return view.getFloat32(0);
+};
+
+// Where to start looking for 3 sets of 4 bytes each for float[3]
+window.floatOffset = 0;
+
 function onEventDataChanged(e) {
-    const {buffer}  = e.target.value;
+    const {buffer} = e.target.value;
+
     const eventData = new Uint8Array(buffer);
 
     let axisY = 0; // Max is 157
@@ -174,6 +201,13 @@ function onEventDataChanged(e) {
     logControllerButtons(structuredEventData);
 
     logEventData(eventData);
+    logEventData3Float([
+        getFloatFrom4Bytes(buffer.slice(floatOffset, floatOffset + 4)),
+        getFloatFrom4Bytes(buffer.slice(floatOffset + 4, floatOffset + 8)),
+        getFloatFrom4Bytes(buffer.slice(floatOffset + 8, floatOffset + 12)),
+    ]);
+
+    updateHistogram(eventData);
 }
 
 const onClickScan = () => {

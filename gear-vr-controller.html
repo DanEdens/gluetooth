@@ -47,7 +47,6 @@
     }
 
     #touchpadMaxValuesDisplay,
-    #eventDataHexDisplay,
     #eventDataDisplay,
     #logDisplay {
         font-family: monospace;
@@ -97,10 +96,6 @@
 
 <br>
 
-<b>Event Data (hex)</b>
-<div id="eventDataHexDisplay"></div>
-<br>
-
 <b>Event Data (3 floats)</b>
 <div id="eventData3FloatDisplay"></div>
 <br>
@@ -109,6 +104,7 @@
 
 <div id="logDisplay"><b>Log</b></div>
 
+<script src="bit-buffer.js"></script>
 <script src="arrayBufferToString.js"></script>
 <script src="histogram.js"></script>
 <script src="gear-vr-controller.services.js"></script>

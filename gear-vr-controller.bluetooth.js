@@ -1,6 +1,5 @@
 const logDisplay             = document.getElementById('logDisplay');
 const eventDataDisplay       = document.getElementById('eventDataDisplay');
-const eventDataHexDisplay    = document.getElementById('eventDataHexDisplay');
 const eventData3FloatDisplay = document.getElementById('eventData3FloatDisplay');
 
 const touchpadDisplayDotStyle  = document.getElementById('touchpadDisplayDot').style;
@@ -22,11 +21,6 @@ const disconnectButton    = document.getElementById('disconnectButton');
         codeElement       = document.createElement('code');
         codeElement.title = `Byte ${i}`;
         eventDataDisplay.appendChild(codeElement);
-
-        codeElement       = document.createElement('code');
-        codeElement.title = `Byte ${i}`;
-        eventDataHexDisplay.appendChild(codeElement);
-
     }
 })();
 
@@ -37,8 +31,7 @@ const logMessage = message => {
 
 const logEventData = eventData => {
     eventData.forEach((v, i) => {
-        eventDataHexDisplay.children[i].innerHTML = v.toString(16).padStart(2, '0');
-        eventDataDisplay.children[i].innerHTML    = v;
+        eventDataDisplay.children[i].innerHTML = v;
     });
 };
 

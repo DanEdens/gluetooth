@@ -34,3 +34,17 @@ function arrayBufferToString(buffer, encoding) {
 
     return str;
 }
+
+
+function binaryStringToHexString(binaryString) {
+    const hex = parseInt(binaryString, 2).toString(16);
+
+    return '0x'+hex.padStart(
+        Math.round(hex.length / 2) * 2, '0'
+    );
+}
+
+
+function hexToBinaryString(hex) {
+    return hex.toString(2);
+}

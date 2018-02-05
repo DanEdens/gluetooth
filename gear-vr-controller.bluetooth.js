@@ -155,23 +155,9 @@ function onEventDataChanged(e) {
     let axisY = 0; // Max is 157
     let axisX = 0; // Max is 157
 
-    axisX += eventData[54] & (1 << 0) ? (1 << 5) : 0;
-    axisX += eventData[54] & (1 << 1) ? (1 << 6) : 0;
-    axisX += eventData[54] & (1 << 2) ? (1 << 7) : 0;
-    axisX += eventData[55] & (1 << 3) ? (1 << 0) : 0;
-    axisX += eventData[55] & (1 << 4) ? (1 << 1) : 0;
-    axisX += eventData[55] & (1 << 5) ? (1 << 2) : 0;
-    axisX += eventData[55] & (1 << 6) ? (1 << 3) : 0;
-    axisX += eventData[55] & (1 << 7) ? (1 << 4) : 0;
-
-    axisY += eventData[55] & (1 << 0) ? (1 << 7) : 0;
-    axisY += eventData[56] & (1 << 1) ? (1 << 0) : 0;
-    axisY += eventData[56] & (1 << 2) ? (1 << 1) : 0;
-    axisY += eventData[56] & (1 << 3) ? (1 << 2) : 0;
-    axisY += eventData[56] & (1 << 4) ? (1 << 3) : 0;
-    axisY += eventData[56] & (1 << 5) ? (1 << 4) : 0;
-    axisY += eventData[56] & (1 << 6) ? (1 << 5) : 0;
-    axisY += eventData[56] & (1 << 7) ? (1 << 6) : 0;
+    // This is clearly still wrong...
+    axisX = ((eventData[54] & 0x07) << 5 | (eventData[55] & 0xF8) >> 3);
+    axisY = ((eventData[55] & 0x01) << 7 | (eventData[56] & 0xFE) >> 1);
 
     const triggerButton    = Boolean(eventData[58] & (1 << 0));
     const homeButton       = Boolean(eventData[58] & (1 << 1));

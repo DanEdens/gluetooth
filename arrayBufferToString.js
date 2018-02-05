@@ -48,3 +48,16 @@ function binaryStringToHexString(binaryString) {
 function hexToBinaryString(hex) {
     return hex.toString(2);
 }
+
+function checkEndian() {
+    var arrayBuffer = new ArrayBuffer(2);
+    var uint8Array = new Uint8Array(arrayBuffer);
+    var uint16array = new Uint16Array(arrayBuffer);
+    uint8Array[0] = 0xAA; // set first byte
+    uint8Array[1] = 0xBB; // set second byte
+    if(uint16array[0] === 0xBBAA) return "little endian";
+    if(uint16array[0] === 0xAABB) return "big endian";
+    else throw new Error("Something crazy just happened");
+}
+
+// JS is LE on x86 and ARM, usually

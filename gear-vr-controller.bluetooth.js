@@ -6,6 +6,7 @@ const touchpadDisplayDotStyle  = document.getElementById('touchpadDisplayDot').s
 const touchpadMaxValuesDisplay = document.getElementById('touchpadMaxValuesDisplay');
 
 const controllerButtonsDisplay = document.getElementById('controllerButtonsDisplay');
+const aframeBox                = document.getElementById('aframeBox');
 
 
 const setOffModeButton    = document.getElementById('setOffModeButton');
@@ -147,17 +148,123 @@ const getFloatFrom4Bytes = arrayBuffer4bytes => {
 window.floatOffset = 0;
 let lastEventDataUint8Array;
 
+// Combination of
+// com.samsung.android.app.vr.input.service/c/c.class:L47
+// com.samsung.android.app.vr.input.service/c/c.class:L71
+// com.samsung.android.app.vr.input.service/c/c.class:L115
+function getFloat0FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 4, 16 * index + 5 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+function getFloat1FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 6, 16 * index + 7 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+function getFloat2FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 8, 16 * index + 9 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+
+function getFloat3FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 10, 16 * index + 11 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+function getFloat4FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 12, 16 * index + 13 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+function getFloat5FromArrayBufferAtIndex(arrayBuffer, index) {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 14, 16 * index + 15 + 1));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+}
+
+// Get vector3 length
+// com.samsung.android.app.vr.input.service/ui/c.class:L115
+function getLength(f1, f2, f3) {
+    return Math.sqrt(f1 ** 2 + f2 ** 2 + f3 ** 2);
+}
+
+function logOrientation({angleX, angleY, angleZ}) {
+    aframeBox.object3D.rotation.fromArray([
+        angleZ,
+        angleY,
+        angleX,
+    ]);
+
+    /*
+    aframeBox.setAttribute('rotation', [
+        angleX,
+        angleY,
+        angleZ
+    ].join(' '));
+    */
+}
+
 function onEventDataChanged(e) {
     const {buffer} = e.target.value;
 
     const eventData = new Uint8Array(buffer);
 
-    let axisY = 0; // Max is 157
-    let axisX = 0; // Max is 157
+    // Max observed value = 315
+    // (should correspond to touchpad sensitive dimension in mm)
+    // VERIFIED!
+    const axisX = (
+        ((eventData[3 * 16 + 6] & 0xF) << 6) +
+        ((eventData[3 * 16 + 6 + 1] & 0xFC) >> 2)
+    ) & 0x3FF;
 
-    // This is clearly still wrong...
-    axisX = ((eventData[54] & 0x07) << 5 | (eventData[55] & 0xF8) >> 3);
-    axisY = ((eventData[55] & 0x01) << 7 | (eventData[56] & 0xFE) >> 1);
+    // Max observed value = 315
+    const axisY = (
+        ((eventData[3 * 16 + 6 + 1] & 0x3) << 8) +
+        ((eventData[3 * 16 + 6 + 2] & 0xFF) >> 0)
+    ) & 0x3FF;
+
+    // com.samsung.android.app.vr.input.service/ui/c.class:L222
+    const timestamp = ((new Int32Array(buffer.slice(0, 4))[0]) & 0xFFFFFFFF) / 1000;
+
+    // com.samsung.android.app.vr.input.service/ui/c.class:L222
+    const temperature = eventData[3 * 16 + 6 + 3];
+
+    // There are 3 frames of accelerometer, gyroscope and magnet
+
+    // Accelerometer values
+    const float0 = getFloat0FromArrayBufferAtIndex(buffer, floatOffset);
+    const float1 = getFloat1FromArrayBufferAtIndex(buffer, floatOffset);
+    const float2 = getFloat2FromArrayBufferAtIndex(buffer, floatOffset);
+    const length = getLength(float0, float1, float2);
+
+    // Gyroscope values
+    // const float3 = getFloat3FromArrayBufferAtIndex(buffer, floatOffset);
+    // const float4 = getFloat4FromArrayBufferAtIndex(buffer, floatOffset);
+    // const float5 = getFloat5FromArrayBufferAtIndex(buffer, floatOffset);
+
+    // todo: Magnetometer values still missing!
+
+    // These are euler angles, probably
+
+    // Factor to convert radians to degrees
+    // = 180 / Math.PI
+    // = 57.2957
+
+    // com.samsung.android.app.vr.input.service/ui/c.class:L313
+    //const angleX = Math.floor(Math.asin(float0 / length) * 57.29578);
+
+    const angleX = Math.asin(float0 / length);
+
+    // com.samsung.android.app.vr.input.service/ui/c.class:L317
+    //const angleY = Math.floor(Math.asin(float1 / length) * 57.29578);
+
+    const angleY = Math.asin(float1 / length);
+
+    // com.samsung.android.app.vr.input.service/ui/c.class:L321
+    //const angleZ = 90 - Math.floor(Math.acos(float2 / length) * 57.29578);
+
+    const angleZ = Math.PI / 2 - Math.acos(float2 / length);
 
     const triggerButton    = Boolean(eventData[58] & (1 << 0));
     const homeButton       = Boolean(eventData[58] & (1 << 1));
@@ -167,6 +274,14 @@ function onEventDataChanged(e) {
     const volumeDownButton = Boolean(eventData[58] & (1 << 5));
 
     const structuredEventData = {
+        // incorrect interpretation of values:
+        angleX,
+        angleY,
+        angleZ,
+
+        // correct:
+        timestamp,
+        temperature,
         axisX,
         axisY,
         triggerButton,
@@ -175,16 +290,23 @@ function onEventDataChanged(e) {
         touchpadButton,
         volumeUpButton,
         volumeDownButton
+
+        // missing:
+        // magnetometerX
+        // magnetometerY
+        // magnetometerZ
+        // flags
     };
 
     logTouchPadValues(structuredEventData);
     logControllerButtons(structuredEventData);
+    logOrientation(structuredEventData);
 
-    logEventData(eventData);
+    //logEventData(eventData);
     logEventData3Float([
-        getFloatFrom4Bytes(buffer.slice(floatOffset, floatOffset + 4)),
-        getFloatFrom4Bytes(buffer.slice(floatOffset + 4, floatOffset + 8)),
-        getFloatFrom4Bytes(buffer.slice(floatOffset + 8, floatOffset + 12))
+        timestamp,
+        temperature,
+        angleZ
     ]);
 
     updateHistogram(eventData);
@@ -227,19 +349,13 @@ const onClickDisconnect = () => gattServer && gattServer.disconnect();
 
 const onClickSetFloatValue = () => window.floatOffset = parseInt(prompt('Float offset', window.floatOffset));
 
-const saveByteArray = (function () {
-    const a = document.createElement("a");
-    document.body.appendChild(a);
-    a.style = "display: none";
-
-    return (data, name) => {
-        var blob   = new Blob([data]),
-            url    = window.URL.createObjectURL(blob);
-        a.href     = url;
-        a.download = name;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-}());
+const saveByteArray = (data, name) => {
+    const a    = document.createElement("a");
+    const url  = window.URL.createObjectURL(new Blob([data]));
+    a.href     = url;
+    a.download = name;
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
 
 const onClickDownloadEventData = () => saveByteArray(lastEventDataUint8Array || [], 'eventData.binary');

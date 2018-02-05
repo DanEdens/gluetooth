@@ -1,4 +1,5 @@
 <html>
+<script src="https://aframe.io/releases/0.7.0/aframe.min.js"></script>
 <style>
     button {
         padding: 1em;
@@ -55,6 +56,11 @@
     canvas {
         background: gray;
     }
+
+    a-scene {
+        width: 400px;
+        height: 300px;
+    }
 </style>
 <button onclick="onClickScan()">Scan for Gear VR Controllers</button>
 <button id="disconnectButton" disabled onclick="onClickDisconnect()">Disconnect</button>
@@ -68,6 +74,22 @@
 </button>
 
 <button id="downloadLastEventDataButton" onclick="onClickDownloadEventData()">Download EventData</button>
+
+<hr>
+
+<a-scene embedded>
+    <a-box
+            id="aframeBox"
+            position="0 1.5 -2"
+            rotation="0 0 0"
+            color="#4CC3D9"
+            width="0.25"
+            height="0.65"
+            depth="0.05"
+    ></a-box>
+    <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+    <a-sky color="#343434"></a-sky>
+</a-scene>
 
 <hr>
 

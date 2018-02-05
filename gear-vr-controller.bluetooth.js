@@ -39,7 +39,7 @@ const logEventData3Float = float3 => {
     eventData3FloatDisplay.innerHTML = [
         `X = ${float3[0]}`,
         `Y = ${float3[1]}`,
-        `Z = ${float3[2]}`,
+        `Z = ${float3[2]}`
     ].join('<br>');
 };
 
@@ -70,7 +70,7 @@ let customServiceNotify;
 let customServiceWrite;
 
 const userSelection = {
-    service: SERVICES.CUSTOM_SERVICE,
+    service: SERVICES.CUSTOM_SERVICE
 };
 
 const NOTIFY_CHARACTERISTIC = getCharacteristic(SERVICES.CUSTOM_SERVICE, 0);
@@ -127,7 +127,7 @@ const onNotifyCharacteristicRetrieved = characteristic => {
 
 const maxValues = {
     axisX: 0,
-    axisY: 0,
+    axisY: 0
 };
 
 const getFloatFrom4Bytes = arrayBuffer4bytes => {
@@ -145,6 +145,7 @@ const getFloatFrom4Bytes = arrayBuffer4bytes => {
 
 // Where to start looking for 3 sets of 4 bytes each for float[3]
 window.floatOffset = 0;
+let lastEventDataUint8Array;
 
 function onEventDataChanged(e) {
     const {buffer} = e.target.value;
@@ -197,10 +198,12 @@ function onEventDataChanged(e) {
     logEventData3Float([
         getFloatFrom4Bytes(buffer.slice(floatOffset, floatOffset + 4)),
         getFloatFrom4Bytes(buffer.slice(floatOffset + 4, floatOffset + 8)),
-        getFloatFrom4Bytes(buffer.slice(floatOffset + 8, floatOffset + 12)),
+        getFloatFrom4Bytes(buffer.slice(floatOffset + 8, floatOffset + 12))
     ]);
 
     updateHistogram(eventData);
+
+    lastEventDataUint8Array = eventData;
 }
 
 const onClickScan = () => {
@@ -235,3 +238,22 @@ const onClickSetVRMode = () =>
         .catch(e => logMessage(`Error: ${e}`));
 
 const onClickDisconnect = () => gattServer && gattServer.disconnect();
+
+const onClickSetFloatValue = () => window.floatOffset = parseInt(prompt('Float offset', window.floatOffset));
+
+const saveByteArray = (function () {
+    const a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+
+    return (data, name) => {
+        var blob   = new Blob([data]),
+            url    = window.URL.createObjectURL(blob);
+        a.href     = url;
+        a.download = name;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
+
+const onClickDownloadEventData = () => saveByteArray(lastEventDataUint8Array || [], 'eventData.binary');

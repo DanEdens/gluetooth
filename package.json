@@ -17,6 +17,7 @@
   "dependencies": {
     "node-web-bluetooth": "^0.0.7",
     "robotjs": "^0.4.7",
+    "three": "^0.89.0",
     "websocket": "^1.0.25"
   }
 }

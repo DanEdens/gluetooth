@@ -217,13 +217,13 @@ function onEventDataChanged(e) {
 
     // There are 3 frames of accelerometer, gyroscope and magnet
 
-    // Accelerometer values
+    // Orientation values
     const float0 = getFloat0FromArrayBufferAtIndex(buffer, 0);
     const float1 = getFloat1FromArrayBufferAtIndex(buffer, 0);
     const float2 = getFloat2FromArrayBufferAtIndex(buffer, 0);
     const length = getLength(float0, float1, float2);
 
-    // Gyroscope values
+    // Gyroscope values?
     // const float3 = getFloat3FromArrayBufferAtIndex(buffer, floatOffset);
     // const float4 = getFloat4FromArrayBufferAtIndex(buffer, floatOffset);
     // const float5 = getFloat5FromArrayBufferAtIndex(buffer, floatOffset);

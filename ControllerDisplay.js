@@ -1,11 +1,12 @@
 class ControllerDisplay {
     constructor() {
-        this.PATH             = 'models/';
-        this.TILT             = Math.PI * 0.2;
-        this.gearVRController = null;
-        this.material         = null;
-        this.materialImage    = null;
-        this.ctx              = null;
+        this.PATH                 = 'models/';
+        this.TILT                 = Math.PI * 0.2;
+        this.gearVRController     = null;
+        this.material             = null;
+        this.materialImage        = null;
+        this.ctx                  = null;
+        this.selectedDeviceAction = null;
 
         this.camera = new THREE.PerspectiveCamera(
             70,
@@ -22,7 +23,7 @@ class ControllerDisplay {
         let light;
 
         light = new THREE.PointLight(0xaaaaaa, 1, 100);
-        light.position.set(15, 15, 15);
+        light.position.set(15, 15, -15);
         this.scene.add(light);
 
         light = new THREE.PointLight(0xcccccc, 1, 100);
@@ -35,12 +36,14 @@ class ControllerDisplay {
         document.body.appendChild(this.renderer.domElement);
 
         // Bind to self because ES6 classes suck vs TS
-        this.animate              = this.animate.bind(this);
-        this.updateTexture        = this.updateTexture.bind(this);
-        this.setRotation          = this.setRotation.bind(this);
-        this.onMTLLoaded          = this.onMTLLoaded.bind(this);
-        this.onOBJLoaded          = this.onOBJLoaded.bind(this);
-        this.onSelectDeviceAction = this.onSelectDeviceAction.bind(this);
+        this.animate                   = this.animate.bind(this);
+        this.updateTexture             = this.updateTexture.bind(this);
+        this.setRotation               = this.setRotation.bind(this);
+        this.onMTLLoaded               = this.onMTLLoaded.bind(this);
+        this.onOBJLoaded               = this.onOBJLoaded.bind(this);
+        this.onSelectDeviceAction      = this.onSelectDeviceAction.bind(this);
+        this.onClickDeviceActionButton = this.onClickDeviceActionButton.bind(this);
+        this.onControllerDataReceived  = this.onControllerDataReceived.bind(this);
 
         const mtlLoader = new THREE.MTLLoader();
         mtlLoader.setPath(this.PATH);
@@ -49,6 +52,11 @@ class ControllerDisplay {
         document.getElementById('deviceActions').addEventListener(
             'change',
             this.onSelectDeviceAction
+        );
+
+        document.getElementById('deviceActionsButton').addEventListener(
+            'click',
+            this.onClickDeviceActionButton
         );
     }
 
@@ -68,9 +76,8 @@ class ControllerDisplay {
 
     onOBJLoaded(object) {
         object.scale.set(15, 15, 15);
-        //object.scale.set(10, 10, 10);
         object.position.set(0, 0.1, -0.5);
-        object.rotation.set(this.TILT, 0, 0);
+        object.rotation.set(this.TILT, 0, 0); //.set(-this.TILT, Math.PI, 0);
         this.scene.add(object);
         this.animate();
 
@@ -85,31 +92,101 @@ class ControllerDisplay {
         this.ctx      = canvas.getContext('2d');
 
         this.canvas = canvas;
-        document.body.appendChild(canvas);
+        //document.body.appendChild(canvas);
     }
 
-    updateTexture({touchPad,bluetoothLight}) {
-        const {ctx}   = this;
+    updateTexture(options) {
+        const PI2  = Math.PI * 2;
+        const PI_4 = Math.PI * 0.25;
+        const {
+                  backButton,
+                  homeButton,
+                  touchpadButton,
+                  triggerButton,
+                  axisX, axisY,
+                  volumeUpButton,
+                  volumeDownButton,
+                  isBluetoothLightOn
+              }    = options;
+
+        const {ctx} = this;
 
         ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
         ctx.drawImage(this.materialImage, 0, 0);
 
-        if (touchPad) {
+        if (touchpadButton) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
             ctx.beginPath();
-            ctx.arc(197, 60, 30, 0, 2 * Math.PI);
-            ctx.fill();
-
-            // Sample finger cursor
-            ctx.fillStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(197, 50, 5, 0, 2 * Math.PI);
+            ctx.arc(197, 60, 30, 0, PI2);
             ctx.fill();
         }
 
-        if(bluetoothLight) {
+        if (volumeUpButton) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(106, 13, 11, 0, PI2);
+            ctx.fill();
+        }
+
+        if (volumeDownButton) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(140, 13, 11, 0, PI2);
+            ctx.fill();
+        }
+
+        if (backButton) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(24, 18, 20, 0, PI2);
+            ctx.fill();
+        }
+
+        if (homeButton) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(124, 44, 20, 0, PI2);
+            ctx.fill();
+        }
+
+        if (triggerButton) {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.moveTo(113, 61);
+            ctx.lineTo(138, 61);
+            ctx.lineTo(152, 113);
+            ctx.lineTo(154, 170);
+            ctx.lineTo(154, 230);
+            ctx.lineTo(140, 256);
+            ctx.lineTo(117, 256);
+            ctx.lineTo(125, 220);
+            ctx.lineTo(122, 163);
+            ctx.lineTo(111, 120);
+            ctx.lineTo(122, 163);
+            ctx.lineTo(108, 101);
+            ctx.fill();
+        }
+
+        if (axisX && axisY) {
+            // Texture is mapped at an angle
+            // Need to compensate for that rotation
+            ctx.translate(197, 60);
+            ctx.rotate(-PI_4);
+            const cx = (axisX - 157.5) / 157.5 * 30;
+            const cy = (axisY - 157.5) / 157.5 * 30;
+
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5, 0, PI2);
+            ctx.fill();
+            ctx.rotate(PI_4);
+            ctx.translate(-197, -60);
+        }
+
+        if (isBluetoothLightOn) {
             ctx.fillStyle = 'blue';
             ctx.beginPath();
-            ctx.arc(197, 208, 1, 0, 2 * Math.PI);
+            ctx.arc(197, 208, 1, 0, PI2);
             ctx.fill();
         }
 
@@ -130,12 +207,42 @@ class ControllerDisplay {
     }
 
     onSelectDeviceAction(e) {
-        const {value} = e.target;
+        const {value}             = e.target;
+        this.selectedDeviceAction = value;
+    }
 
-        console.log(value);
+    onControllerDataReceived(data) {
+        this.updateTexture(data);
+        this.setRotation({
+            a: data.angleX,
+            b: data.angleY,
+            g: data.angleZ
+        });
+    }
 
-        e.target.selectedIndex = 0;
+    onClickDeviceActionButton() {
+        switch (this.selectedDeviceAction) {
+            case 'pair':
+                controllerBluetoothInterface.pair();
+                break;
+
+            case 'disconnect':
+                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_OFF)
+                    .then(() => controllerBluetoothInterface.disconnect());
+                break;
+
+            case 'sensor':
+                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_SENSOR)
+                    .then(() => controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_VR_MODE))
+                    .then(() => controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_SENSOR));
+                break;
+
+            default:
+        }
     }
 }
 
-window.foo = new ControllerDisplay();
+const controllerDisplay            = new ControllerDisplay();
+const controllerBluetoothInterface = new ControllerBluetoothInterface(
+    controllerDisplay.onControllerDataReceived
+);

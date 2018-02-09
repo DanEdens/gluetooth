@@ -10,14 +10,21 @@
     }
 </style>
 <body style="padding:0;margin: 0; background: rgb(64,64,64)">
-<select id="deviceActions">
-    <option disabled selected>Select a device action:</option>
-    <option value="pair">Pair with Gear VR controller</option>
-    <option value="disconnect">Disconnect</option>
-</select>
+<div id="deviceActions">
+    <select id="deviceActionsOption">
+        <option disabled selected>Select a device action:</option>
+        <option value="pair">Pair with Gear VR controller</option>
+        <!--<option value="vr-mode">Enable fast update (VR) mode</option>-->
+        <option value="sensor">Start controller data updates</option>
+        <option value="disconnect">Disconnect</option>
+    </select>
+
+    <button id="deviceActionsButton">Run</button>
+</div>
 </body>
 <script src="node_modules/three/build/three.min.js"></script>
 <script src="node_modules/three/examples/js/loaders/MTLLoader.js"></script>
 <script src="node_modules/three/examples/js/loaders/OBJLoader.js"></script>
+<script src="ControllerBluetoothInterface.js"></script>
 <script src="ControllerDisplay.js"></script>
 </html>

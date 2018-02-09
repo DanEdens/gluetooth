@@ -131,21 +131,8 @@ const maxValues = {
     axisY: 0
 };
 
-const getFloatFrom4Bytes = arrayBuffer4bytes => {
-    const data = new Uint8Array(arrayBuffer4bytes);
-
-    const arrayBuffer = new ArrayBuffer(4);
-    const view        = new DataView(arrayBuffer);
-    data.forEach((b, i) => {
-        view.setUint8(3 - i, b);
-        //view.setUint8(i, b);
-    });
-
-    return view.getFloat32(0);
-};
-
 // Where to start looking for 3 sets of 4 bytes each for float[3]
-window.floatOffset = 0;
+window.eulerOrder = 'XYZ';
 let lastEventDataUint8Array;
 
 // Combination of
@@ -164,7 +151,7 @@ function getFloat1FromArrayBufferAtIndex(arrayBuffer, index) {
 
 function getFloat2FromArrayBufferAtIndex(arrayBuffer, index) {
     const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + 8, 16 * index + 9 + 1));
-    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 4096.0]))[0];
 }
 
 
@@ -189,20 +176,18 @@ function getLength(f1, f2, f3) {
     return Math.sqrt(f1 ** 2 + f2 ** 2 + f3 ** 2);
 }
 
-function logOrientation({angleX, angleY, angleZ}) {
-    aframeBox.object3D.rotation.fromArray([
-        angleZ,
-        angleY,
-        angleX,
-    ]);
 
-    /*
-    aframeBox.setAttribute('rotation', [
+function logOrientation({angleX, angleY, angleZ}) {
+    aframeBox.object3D.rotation.set(
         angleX,
         angleY,
-        angleZ
-    ].join(' '));
-    */
+        angleZ,
+        window.eulerOrder
+    );
+    // const o = aframeBox.object3D;
+    // o.setRotationFromAxisAngle(new THREE.Vector3(1,0,0), angleX);
+    // o.setRotationFromAxisAngle(new THREE.Vector3(0,1,0), angleY);
+    // o.setRotationFromAxisAngle(new THREE.Vector3(0,0,1), angleZ);
 }
 
 function onEventDataChanged(e) {
@@ -233,9 +218,9 @@ function onEventDataChanged(e) {
     // There are 3 frames of accelerometer, gyroscope and magnet
 
     // Accelerometer values
-    const float0 = getFloat0FromArrayBufferAtIndex(buffer, floatOffset);
-    const float1 = getFloat1FromArrayBufferAtIndex(buffer, floatOffset);
-    const float2 = getFloat2FromArrayBufferAtIndex(buffer, floatOffset);
+    const float0 = getFloat0FromArrayBufferAtIndex(buffer, 0);
+    const float1 = getFloat1FromArrayBufferAtIndex(buffer, 0);
+    const float2 = getFloat2FromArrayBufferAtIndex(buffer, 0);
     const length = getLength(float0, float1, float2);
 
     // Gyroscope values
@@ -243,7 +228,7 @@ function onEventDataChanged(e) {
     // const float4 = getFloat4FromArrayBufferAtIndex(buffer, floatOffset);
     // const float5 = getFloat5FromArrayBufferAtIndex(buffer, floatOffset);
 
-    // todo: Magnetometer values still missing!
+    // todo: Magnetometer values still missing?
 
     // These are euler angles, probably
 
@@ -252,19 +237,19 @@ function onEventDataChanged(e) {
     // = 57.2957
 
     // com.samsung.android.app.vr.input.service/ui/c.class:L313
-    //const angleX = Math.floor(Math.asin(float0 / length) * 57.29578);
+    const angleXDeg = Math.floor(Math.asin(float0 / length) * 57.29578);
 
     const angleX = Math.asin(float0 / length);
 
     // com.samsung.android.app.vr.input.service/ui/c.class:L317
-    //const angleY = Math.floor(Math.asin(float1 / length) * 57.29578);
-
-    const angleY = Math.asin(float1 / length);
+    const angleYDeg = Math.floor(Math.asin(float1 / length) * 57.29578);
+    const angleY    = Math.asin(float1 / length);
 
     // com.samsung.android.app.vr.input.service/ui/c.class:L321
-    //const angleZ = 90 - Math.floor(Math.acos(float2 / length) * 57.29578);
+    const angleZDeg = 90 - Math.floor(Math.acos(float2 / length) * 57.29578);
 
-    const angleZ = Math.PI / 2 - Math.acos(float2 / length);
+    const angleZ = Math.PI * 0.5 - Math.acos(float2 / length);
+
 
     const triggerButton    = Boolean(eventData[58] & (1 << 0));
     const homeButton       = Boolean(eventData[58] & (1 << 1));
@@ -347,7 +332,7 @@ const onClickSetVRMode = () =>
 
 const onClickDisconnect = () => gattServer && gattServer.disconnect();
 
-const onClickSetFloatValue = () => window.floatOffset = parseInt(prompt('Float offset', window.floatOffset));
+const onClickSetEulerOrder = () => window.eulerOrder = prompt('Euler order', window.eulerOrder).toUpperCase();
 
 const saveByteArray = (data, name) => {
     const a    = document.createElement("a");

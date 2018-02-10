@@ -174,8 +174,8 @@ ControllerBluetoothInterface.CMD_LPM_ENABLE                   = '0600';
 ControllerBluetoothInterface.CMD_LPM_DISABLE                  = '0700';
 ControllerBluetoothInterface.CMD_VR_MODE                      = '0800';
 
-ControllerBluetoothInterface.GYRO_FACTOR      = 0.001; // to radians / s
-ControllerBluetoothInterface.ACCEL_FACTOR     = 0.0001; // to g (9.81 m/s**2)
+ControllerBluetoothInterface.GYRO_FACTOR      = 0.0001; // to radians / s
+ControllerBluetoothInterface.ACCEL_FACTOR     = 0.00001; // to g (9.81 m/s**2)
 ControllerBluetoothInterface.TIMESTAMP_FACTOR = 0.001; // to seconds
 
 ControllerBluetoothInterface.getAccelerometerFloatWithOffsetFromArrayBufferAtIndex = (arrayBuffer, offset, index) => {

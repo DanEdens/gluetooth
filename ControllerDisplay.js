@@ -55,6 +55,8 @@ class ControllerDisplay {
         this.onSelectDeviceAction      = this.onSelectDeviceAction.bind(this);
         this.onClickDeviceActionButton = this.onClickDeviceActionButton.bind(this);
         this.onControllerDataReceived  = this.onControllerDataReceived.bind(this);
+        
+	this.wasAnyButtonDown = false;
 
         const mtlLoader = new THREE.MTLLoader();
         mtlLoader.setPath(this.PATH);
@@ -113,7 +115,8 @@ class ControllerDisplay {
     }
 
     updateTexture(options) {
-        const PI2  = Math.PI * 2;
+        let isAnyButtonDown = false;
+	const PI2  = Math.PI * 2;
         const PI_4 = Math.PI * 0.25;
         const {
                   backButton,
@@ -136,6 +139,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(197, 60, 30, 0, PI2);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (volumeUpButton) {
@@ -143,6 +147,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(106, 13, 11, 0, PI2);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (volumeDownButton) {
@@ -150,6 +155,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(140, 13, 11, 0, PI2);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (backButton) {
@@ -157,6 +163,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(24, 18, 20, 0, PI2);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (homeButton) {
@@ -164,6 +171,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(124, 44, 20, 0, PI2);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (triggerButton) {
@@ -182,6 +190,7 @@ class ControllerDisplay {
             ctx.lineTo(122, 163);
             ctx.lineTo(108, 101);
             ctx.fill();
+	    isAnyButtonDown = true;
         }
 
         if (axisX && axisY) {
@@ -198,6 +207,7 @@ class ControllerDisplay {
             ctx.fill();
             ctx.rotate(PI_4);
             ctx.translate(-197, -60);
+	    isAnyButtonDown = true;
         }
 
         if (isBluetoothLightOn) {
@@ -207,14 +217,12 @@ class ControllerDisplay {
             ctx.fill();
         }
 
-        this.material.map.image.src = this.canvas.toDataURL();
-        this.material.needsUpdate   = true;
-    }
+        if(isAnyButtonDown || this.wasAnyButtonDown !== isAnyButtonDown) {
+            this.material.map.image.src = this.canvas.toDataURL();
+            this.material.needsUpdate   = true;
+	}
 
-    // For debug only
-    setTextureURL(url) {
-        this.material.map.image.src = `http://localhost:9000/models/${url}`;
-        this.material.needsUpdate   = true;
+        this.wasAnyButtonDown = isAnyButtonDown;
     }
 
     onSelectDeviceAction(e) {
@@ -223,7 +231,7 @@ class ControllerDisplay {
     }
 
     onControllerDataReceived(data) {
-        // this.updateTexture(data);
+        this.updateTexture(data);
 
         if (this.lastTimestamp) {
 
@@ -262,6 +270,7 @@ class ControllerDisplay {
 
 
         const {heading, pitch, roll} = this.ahrs.getEulerAngles();
+	// todo: Figure out how to better compensate for drift!
         this.gearVRController.rotation.set(roll, heading, pitch, 'XZY');
     }
 

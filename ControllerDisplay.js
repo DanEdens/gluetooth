@@ -1,3 +1,5 @@
+window.AHRS = require('ahrs');
+
 class ControllerDisplay {
     constructor() {
         this.PATH                 = 'models/';
@@ -7,6 +9,15 @@ class ControllerDisplay {
         this.materialImage        = null;
         this.ctx                  = null;
         this.selectedDeviceAction = null;
+        this.ahrs                 = new AHRS({
+            sampleInterval: 10,
+            algorithm:      'Madgwick',
+            beta:           0.8,
+            // kp:             0.5,
+            // ki:             0
+        });
+
+        this.lastTimestamp = 0;
 
         this.camera = new THREE.PerspectiveCamera(
             70,
@@ -38,7 +49,7 @@ class ControllerDisplay {
         // Bind to self because ES6 classes suck vs TS
         this.animate                   = this.animate.bind(this);
         this.updateTexture             = this.updateTexture.bind(this);
-        this.setRotation               = this.setRotation.bind(this);
+        this.log                       = this.log.bind(this);
         this.onMTLLoaded               = this.onMTLLoaded.bind(this);
         this.onOBJLoaded               = this.onOBJLoaded.bind(this);
         this.onSelectDeviceAction      = this.onSelectDeviceAction.bind(this);
@@ -58,6 +69,12 @@ class ControllerDisplay {
             'click',
             this.onClickDeviceActionButton
         );
+
+        this.logElement = document.getElementById('deviceActionsLog');
+    }
+
+    log(msg) {
+        this.logElement.innerHTML = msg;
     }
 
     animate() {
@@ -200,24 +217,55 @@ class ControllerDisplay {
         this.material.needsUpdate   = true;
     }
 
-    setRotation(eulerAnglesInRadians) {
-        // alpha, beta, gamma
-        const {a, b, g} = eulerAnglesInRadians;
-        this.gearVRController.rotation.set(a, b, g);
-    }
-
     onSelectDeviceAction(e) {
         const {value}             = e.target;
         this.selectedDeviceAction = value;
     }
 
     onControllerDataReceived(data) {
+        const timestampSeconds = data.timestamp * 0.001;
         this.updateTexture(data);
-        this.setRotation({
-            a: data.angleX,
-            b: data.angleY,
-            g: data.angleZ
-        });
+
+        if (this.lastTimestamp) {
+
+
+            this.ahrs.update(
+                data.gyro[0] * 0.001,
+                data.gyro[1] * 0.001,
+                data.gyro[2] * 0.001,
+                data.accel[0] * 0.0001,
+                data.accel[1] * 0.0001,
+                data.accel[2] * 0.0001,
+                data.magX, data.magY, data.magZ,
+                timestampSeconds - this.lastTimestamp
+            );
+            //
+            // this.ahrs.update(
+            //     data.gyro[3] * 0.001,
+            //     data.gyro[4] * 0.001,
+            //     data.gyro[5] * 0.001,
+            //     data.accel[3] * 0.0001,
+            //     data.accel[4] * 0.0001,
+            //     data.accel[5] * 0.0001,
+            //     //data.magX, data.magY, data.magZ
+            // );
+            // this.ahrs.update(
+            //     data.gyro[6] * 0.001,
+            //     data.gyro[7] * 0.001,
+            //     data.gyro[8] * 0.001,
+            //     data.accel[6] * 0.0001,
+            //     data.accel[7] * 0.0001,
+            //     data.accel[8] * 0.0001,
+            //     data.magX, data.magY, data.magZ,
+            //     data.timestamp - this.lastTimestamp
+            // );
+        }
+
+        this.lastTimestamp = timestampSeconds;
+
+
+        const {heading, pitch, roll} = this.ahrs.getEulerAngles();
+        this.gearVRController.rotation.set(roll, heading, pitch, 'ZYX');
     }
 
     onClickDeviceActionButton() {
@@ -232,8 +280,8 @@ class ControllerDisplay {
                 break;
 
             case 'sensor':
-                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_SENSOR)
-                    .then(() => controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_VR_MODE))
+                // Have to do the SENSOR -> VR -> SENSOR cycle a few times to ensure it runs
+                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_VR_MODE)
                     .then(() => controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_SENSOR));
                 break;
 

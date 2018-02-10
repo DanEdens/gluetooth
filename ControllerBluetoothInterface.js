@@ -88,36 +88,40 @@ class ControllerBluetoothInterface {
         // com.samsung.android.app.vr.input.service/ui/c.class:L222
         const temperature = eventData[57];
 
-        // Orientation values
-        const {getFloatWithOffsetFromArrayBufferAtIndex, getLength} = ControllerBluetoothInterface;
+        const {
+                  getAccelerometerFloatWithOffsetFromArrayBufferAtIndex,
+                  getGyroscopeFloatWithOffsetFromArrayBufferAtIndex,
+                  getMagnetometerFloatWithOffsetFromArrayBufferAtIndex
+              } = ControllerBluetoothInterface;
 
-        const float0 = getFloatWithOffsetFromArrayBufferAtIndex(buffer, 4, 0);
-        const float1 = getFloatWithOffsetFromArrayBufferAtIndex(buffer, 6, 0);
-        const float2 = getFloatWithOffsetFromArrayBufferAtIndex(buffer, 8, 0);
-        const length = getLength(float0, float1, float2);
+        // 3 x accelerometer and gyroscope x,y,z values per data event
+        const accel = [
+            getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 4, 0),
+            getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 6, 0),
+            getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 8, 0),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 4, 1),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 6, 1),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 8, 1),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 4, 2),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 6, 2),
+            // getAccelerometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 8, 2)
+        ].map(v => v * ControllerBluetoothInterface.ACCEL_FACTOR);
 
-        // Gyroscope values
-        // const float3 = getFloatWithOffsetFromArrayBufferAtIndex(buffer,10, 0);
-        // const float4 = getFloatWithOffsetFromArrayBufferAtIndex(buffer,12, 0);
-        // const float5 = getFloatWithOffsetFromArrayBufferAtIndex(buffer,14, 0);
+        const gyro = [
+            getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 10, 0),
+            getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 12, 0),
+            getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 14, 0),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 10, 1),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 12, 1),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 14, 1),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 10, 2),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 12, 2),
+            // getGyroscopeFloatWithOffsetFromArrayBufferAtIndex(buffer, 14, 2)
+        ].map(v => v * ControllerBluetoothInterface.GYRO_FACTOR);
 
-        // todo: Magnetometer values still missing?
-
-        // Factor to convert radians to degrees
-        // = 180 / Math.PI
-        // = 57.2957
-
-        // com.samsung.android.app.vr.input.service/ui/c.class:L313
-        const angleXDeg = Math.floor(Math.asin(float0 / length) * 57.29578);
-        const angleX    = Math.asin(float0 / length);
-
-        // com.samsung.android.app.vr.input.service/ui/c.class:L317
-        const angleYDeg = Math.floor(Math.asin(float1 / length) * 57.29578);
-        const angleY    = Math.asin(float1 / length);
-
-        // com.samsung.android.app.vr.input.service/ui/c.class:L321
-        const angleZDeg = 90 - Math.floor(Math.acos(float2 / length) * 57.29578);
-        const angleZ    = Math.PI * 0.5 - Math.acos(float2 / length);
+        const magX = getMagnetometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 0);
+        const magY = getMagnetometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 2);
+        const magZ = getMagnetometerFloatWithOffsetFromArrayBufferAtIndex(buffer, 4);
 
         const triggerButton    = Boolean(eventData[58] & (1 << 0));
         const homeButton       = Boolean(eventData[58] & (1 << 1));
@@ -127,28 +131,20 @@ class ControllerBluetoothInterface {
         const volumeDownButton = Boolean(eventData[58] & (1 << 5));
 
         this.onControllerDataReceived({
-            // incorrect interpretation of values?
-            angleX,
-            angleXDeg,
-            angleY,
-            angleYDeg,
-            angleZ,
-            angleZDeg,
+            accel,
+            gyro,
 
-            // correct:
+            magX, magY, magZ,
+
             timestamp,
             temperature,
-            axisX,
-            axisY,
+            axisX, axisY,
             triggerButton,
             homeButton,
             backButton,
             touchpadButton,
             volumeUpButton,
             volumeDownButton
-
-            // missing:
-            // flags
         });
     }
 
@@ -178,9 +174,23 @@ ControllerBluetoothInterface.CMD_LPM_ENABLE                   = '0600';
 ControllerBluetoothInterface.CMD_LPM_DISABLE                  = '0700';
 ControllerBluetoothInterface.CMD_VR_MODE                      = '0800';
 
-ControllerBluetoothInterface.getFloatWithOffsetFromArrayBufferAtIndex = (arrayBuffer, offset, index) => {
+ControllerBluetoothInterface.GYRO_FACTOR      = 0.001; // to radians / s
+ControllerBluetoothInterface.ACCEL_FACTOR     = 0.0001; // to g (9.81 m/s**2)
+ControllerBluetoothInterface.TIMESTAMP_FACTOR = 0.001; // to seconds
+
+ControllerBluetoothInterface.getAccelerometerFloatWithOffsetFromArrayBufferAtIndex = (arrayBuffer, offset, index) => {
     const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + offset, 16 * index + offset + 2));
     return (new Float32Array([arrayOfShort[0] * 10000.0 * 9.80665 / 2048.0]))[0];
+};
+
+ControllerBluetoothInterface.getGyroscopeFloatWithOffsetFromArrayBufferAtIndex = (arrayBuffer, offset, index) => {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(16 * index + offset, 16 * index + offset + 2));
+    return (new Float32Array([arrayOfShort[0] * 10000.0 * 0.017453292 / 14.285]))[0];
+};
+
+ControllerBluetoothInterface.getMagnetometerFloatWithOffsetFromArrayBufferAtIndex = (arrayBuffer, offset) => {
+    const arrayOfShort = new Int16Array(arrayBuffer.slice(32 + offset, 32 + offset + 2));
+    return (new Float32Array([arrayOfShort[0] * 0.06]))[0];
 };
 
 ControllerBluetoothInterface.getLength = (f1, f2, f3) => Math.sqrt(f1 ** 2 + f2 ** 2 + f3 ** 2);

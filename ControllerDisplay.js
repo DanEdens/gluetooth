@@ -11,10 +11,10 @@ class ControllerDisplay {
         this.selectedDeviceAction = null;
         this.ahrs                 = new AHRS({
             sampleInterval: 10,
-            algorithm:      'Madgwick',
-            beta:           0.8,
-            // kp:             0.5,
-            // ki:             0
+            algorithm:      'Mahony',
+            //beta:           0.8,
+             kp:             0.5,
+             ki:             0
         });
 
         this.lastTimestamp = 0;
@@ -223,49 +223,46 @@ class ControllerDisplay {
     }
 
     onControllerDataReceived(data) {
-        const timestampSeconds = data.timestamp * 0.001;
-        this.updateTexture(data);
+        // this.updateTexture(data);
 
         if (this.lastTimestamp) {
 
 
             this.ahrs.update(
-                data.gyro[0] * 0.001,
-                data.gyro[1] * 0.001,
-                data.gyro[2] * 0.001,
-                data.accel[0] * 0.0001,
-                data.accel[1] * 0.0001,
-                data.accel[2] * 0.0001,
+                data.gyro[0],
+                data.gyro[1],
+                data.gyro[2],
+                data.accel[0],
+                data.accel[1],
+                data.accel[2],
                 data.magX, data.magY, data.magZ,
-                timestampSeconds - this.lastTimestamp
+                data.timestamp - this.lastTimestamp
             );
             //
             // this.ahrs.update(
-            //     data.gyro[3] * 0.001,
-            //     data.gyro[4] * 0.001,
-            //     data.gyro[5] * 0.001,
-            //     data.accel[3] * 0.0001,
-            //     data.accel[4] * 0.0001,
-            //     data.accel[5] * 0.0001,
-            //     //data.magX, data.magY, data.magZ
+            //     data.gyro[3],
+            //     data.gyro[4],
+            //     data.gyro[5],
+            //     data.accel[3],
+            //     data.accel[4],
+            //     data.accel[5],
             // );
+            //
             // this.ahrs.update(
-            //     data.gyro[6] * 0.001,
-            //     data.gyro[7] * 0.001,
-            //     data.gyro[8] * 0.001,
-            //     data.accel[6] * 0.0001,
-            //     data.accel[7] * 0.0001,
-            //     data.accel[8] * 0.0001,
-            //     data.magX, data.magY, data.magZ,
-            //     data.timestamp - this.lastTimestamp
+            //     data.gyro[6],
+            //     data.gyro[7],
+            //     data.gyro[8],
+            //     data.accel[6],
+            //     data.accel[7],
+            //     data.accel[8],
             // );
         }
 
-        this.lastTimestamp = timestampSeconds;
+        this.lastTimestamp = data.timestamp;
 
 
         const {heading, pitch, roll} = this.ahrs.getEulerAngles();
-        this.gearVRController.rotation.set(roll, heading, pitch, 'ZYX');
+        this.gearVRController.rotation.set(roll, heading, pitch, 'XZY');
     }
 
     onClickDeviceActionButton() {

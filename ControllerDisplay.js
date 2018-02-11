@@ -13,7 +13,7 @@ class ControllerDisplay {
             sampleInterval: 10,
             algorithm:      'Mahony',
             //beta:           0.8,
-             kp:             0.5,
+             kp:             0.9,
              ki:             0
         });
 
@@ -55,8 +55,8 @@ class ControllerDisplay {
         this.onSelectDeviceAction      = this.onSelectDeviceAction.bind(this);
         this.onClickDeviceActionButton = this.onClickDeviceActionButton.bind(this);
         this.onControllerDataReceived  = this.onControllerDataReceived.bind(this);
-        
-	this.wasAnyButtonDown = false;
+
+        this.wasAnyButtonDown = false;
 
         const mtlLoader = new THREE.MTLLoader();
         mtlLoader.setPath(this.PATH);
@@ -116,18 +116,18 @@ class ControllerDisplay {
 
     updateTexture(options) {
         let isAnyButtonDown = false;
-	const PI2  = Math.PI * 2;
-        const PI_4 = Math.PI * 0.25;
+        const PI2           = Math.PI * 2;
+        const PI_4          = Math.PI * 0.25;
         const {
-                  backButton,
-                  homeButton,
-                  touchpadButton,
-                  triggerButton,
-                  axisX, axisY,
-                  volumeUpButton,
-                  volumeDownButton,
-                  isBluetoothLightOn
-              }    = options;
+                backButton,
+                homeButton,
+                touchpadButton,
+                triggerButton,
+                axisX, axisY,
+                volumeUpButton,
+                volumeDownButton,
+                isBluetoothLightOn
+            }               = options;
 
         const {ctx} = this;
 
@@ -139,7 +139,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(197, 60, 30, 0, PI2);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (volumeUpButton) {
@@ -147,7 +147,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(106, 13, 11, 0, PI2);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (volumeDownButton) {
@@ -155,7 +155,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(140, 13, 11, 0, PI2);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (backButton) {
@@ -163,7 +163,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(24, 18, 20, 0, PI2);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (homeButton) {
@@ -171,7 +171,7 @@ class ControllerDisplay {
             ctx.beginPath();
             ctx.arc(124, 44, 20, 0, PI2);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (triggerButton) {
@@ -190,7 +190,7 @@ class ControllerDisplay {
             ctx.lineTo(122, 163);
             ctx.lineTo(108, 101);
             ctx.fill();
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (axisX && axisY) {
@@ -207,7 +207,7 @@ class ControllerDisplay {
             ctx.fill();
             ctx.rotate(PI_4);
             ctx.translate(-197, -60);
-	    isAnyButtonDown = true;
+            isAnyButtonDown = true;
         }
 
         if (isBluetoothLightOn) {
@@ -217,10 +217,10 @@ class ControllerDisplay {
             ctx.fill();
         }
 
-        if(isAnyButtonDown || this.wasAnyButtonDown !== isAnyButtonDown) {
+        if (isAnyButtonDown || this.wasAnyButtonDown !== isAnyButtonDown) {
             this.material.map.image.src = this.canvas.toDataURL();
             this.material.needsUpdate   = true;
-	}
+        }
 
         this.wasAnyButtonDown = isAnyButtonDown;
     }
@@ -270,7 +270,7 @@ class ControllerDisplay {
 
 
         const {heading, pitch, roll} = this.ahrs.getEulerAngles();
-	// todo: Figure out how to better compensate for drift!
+        // todo: Figure out how to better compensate for drift!
         this.gearVRController.rotation.set(roll, heading, pitch, 'XZY');
     }
 
@@ -283,6 +283,10 @@ class ControllerDisplay {
             case 'disconnect':
                 controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_OFF)
                     .then(() => controllerBluetoothInterface.disconnect());
+                break;
+
+            case 'calibrate':
+                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_CALIBRATE);
                 break;
 
             case 'sensor':

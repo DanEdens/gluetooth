@@ -16,9 +16,9 @@ yarn start
 ```
 
 then go to any of the following: 
-- http://localhost:9000
-- http://localhost:9000/gear-vr-controller.html
-- http://localhost:9000/ControllerDisplay.html
+- http://localhost:3000
+- http://localhost:3000/gear-vr-controller.html
+- http://localhost:3000/ControllerDisplay.html
 
 ## Legal
 

@@ -10,28 +10,20 @@ class ControllerDisplay {
         this.ctx                  = null;
         this.selectedDeviceAction = null;
         this.ahrs                 = new AHRS({
-            sampleInterval: 10,
 
-            //algorithm: 'Madgwick',
-            //beta:           0.8,
+            sampleInterval: 68.84681583453657, // Madgwick is sensitive to this
+            algorithm:      'Madgwick',
+            beta:           0.352,
 
-            algorithm: 'Mahony',
-            kp:        0.1,
-            ki:        0
+            // algorithm: 'Mahony',
+            // kp:        0.1,
+            // ki:        0
         });
 
-        this.azimuth            = 0;
-        this.lastAzimuth        = 0;
-        this.azimuthLifetime    = 60;
-        this.azimuthLifetimeMax = 60;
+        this.lastZeroQuaternion = null;
 
-        this.lastRollYawPitch = [
-            0,
-            0,
-            0,
-        ];
-
-        this.lastTimestamp = 0;
+        this.driftCompensation = [0, 0, 0];
+        this.lastTimestamp     = 0;
 
         this.camera = new THREE.PerspectiveCamera(
             70,
@@ -245,10 +237,11 @@ class ControllerDisplay {
     }
 
     onControllerDataReceived(data) {
+        let deltaTimeSeconds = 0;
         this.updateTexture(data);
 
         if (this.lastTimestamp) {
-
+            deltaTimeSeconds = (data.timestamp - this.lastTimestamp);
 
             this.ahrs.update(
                 data.gyro[0],
@@ -258,9 +251,9 @@ class ControllerDisplay {
                 data.accel[1],
                 data.accel[2],
                 data.magX, data.magY, data.magZ,
-                data.timestamp - this.lastTimestamp
+                deltaTimeSeconds
             );
-            //
+
             // this.ahrs.update(
             //     data.gyro[3],
             //     data.gyro[4],
@@ -268,6 +261,8 @@ class ControllerDisplay {
             //     data.accel[3],
             //     data.accel[4],
             //     data.accel[5],
+            //     data.magX, data.magY, data.magZ,
+            //     deltaTimeSeconds
             // );
             //
             // this.ahrs.update(
@@ -277,34 +272,24 @@ class ControllerDisplay {
             //     data.accel[6],
             //     data.accel[7],
             //     data.accel[8],
+            //     data.magX, data.magY, data.magZ,
+            //     deltaTimeSeconds
             // );
         }
 
         this.lastTimestamp = data.timestamp;
 
-
-        const {heading, pitch, roll} = this.ahrs.getEulerAngles();
-
-        // todo: Figure out how to better compensate for drift!
-
-        // this.azimuthLifetime--;
-        // if (this.azimuthLifetime < 0 || this.azimuth === 0) {
-        //     this.azimuthLifetime = this.azimuthLifetimeMax;
-        //
-        //     this.log('Azimuth reset!' + new Date());
-        //     this.azimuth = Math.atan2(data.magY, data.magX);
-        // }
+        const {x, y, z, w} = this.ahrs.getQuaternion();
+        this.gearVRController.quaternion.set(x, z, -y, w);
 
         if (data.homeButton) {
-            this.lastRollYawPitch = [roll, heading, pitch];
+            this.lastZeroQuaternion = this.gearVRController.quaternion.clone().inverse();
+            this.log(`Re-zeroed orientation! ${(new Date()).valueOf()}`);
         }
 
-        this.gearVRController.rotation.set(
-            roll - this.lastRollYawPitch[0],
-            heading - this.lastRollYawPitch[1],
-            -pitch + this.lastRollYawPitch[2],
-            'XZY'
-        );
+        if (this.lastZeroQuaternion) {
+            this.gearVRController.quaternion.premultiply(this.lastZeroQuaternion);
+        }
     }
 
     onClickDeviceActionButton() {
@@ -319,7 +304,9 @@ class ControllerDisplay {
                 break;
 
             case 'calibrate':
-                controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_CALIBRATE);
+                this.driftCompensation[2] = parseFloat(prompt('Compensation value', this.driftCompensation[2]));
+
+                //controllerBluetoothInterface.runCommand(ControllerBluetoothInterface.CMD_CALIBRATE);
                 break;
 
             case 'sensor':

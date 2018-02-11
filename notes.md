@@ -162,4 +162,5 @@ Calibration code for sensor fusion...
 - "mahony ahrs drift"  
 - https://www.digikey.com/en/maker/interviews/2016/interview-with-kris-winer---pesky-products
 - https://github.com/kriswiner
+- https://learn.adafruit.com/ahrs-for-adafruits-9-dof-10-dof-breakout/magnetometer-calibration
 

@@ -160,3 +160,6 @@ Calibration code for sensor fusion...
 - https://electronics.stackexchange.com/questions/21007/magnetometer-dynamic-calibration
 - https://diydrones.com/forum/topics/yaw-drift-with-madgwickahrs
 - "mahony ahrs drift"  
+- https://www.digikey.com/en/maker/interviews/2016/interview-with-kris-winer---pesky-products
+- https://github.com/kriswiner
+

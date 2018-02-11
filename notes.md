@@ -154,4 +154,9 @@ Calibration code for sensor fusion...
 - https://bitbucket.org/alberto_pretto/imu_tk
 - https://www.reddit.com/r/AskElectronics/comments/6yhevb/huge_drift_in_imu_orientation_estimation/
 - https://www.reddit.com/r/nicechips/comments/6jk56i/request_easily_available_imu_with_welldocumented/
--  
+- http://www.instructables.com/id/Guide-to-gyro-and-accelerometer-with-Arduino-inclu/
+- "kalman filter imu"
+- http://www.olliw.eu/2013/imu-data-fusing/
+- https://electronics.stackexchange.com/questions/21007/magnetometer-dynamic-calibration
+- https://diydrones.com/forum/topics/yaw-drift-with-madgwickahrs
+- "mahony ahrs drift"  

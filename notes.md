@@ -141,3 +141,17 @@ Pretty sure the structure of the event data is completely revealed here.
 ### 0000 > protocol > C0072f.java
 
 Calibration code for sensor fusion...
+
+- https://github.com/psiphi75/ahrs/issues/5
+- https://electronics.stackexchange.com/questions/111530/ahrs-algorithm-under-continuous-linear-accelerations
+- https://www.youtube.com/watch?v=g1q2Gat-yJo
+- https://josephmalloch.wordpress.com/portfolio/imu-sensor-fusion/
+- http://x-io.co.uk/open-source-imu-and-ahrs-algorithms/
+- https://developer.oculus.com/blog/sensor-fusion-keeping-it-simple/
+  - yaw error
+  - yaw drift
+- https://en.wikipedia.org/wiki/Azimuth
+- https://bitbucket.org/alberto_pretto/imu_tk
+- https://www.reddit.com/r/AskElectronics/comments/6yhevb/huge_drift_in_imu_orientation_estimation/
+- https://www.reddit.com/r/nicechips/comments/6jk56i/request_easily_available_imu_with_welldocumented/
+-  

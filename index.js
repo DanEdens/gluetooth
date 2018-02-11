@@ -25,7 +25,7 @@ const server = http.createServer((request, response) => {
         response.writeHead(500);
         response.end();
     }
-}).listen(9000);
+}).listen(3000);
 
 
 const wsServer = new WebSocketServer({

@@ -11,11 +11,25 @@ class ControllerDisplay {
         this.selectedDeviceAction = null;
         this.ahrs                 = new AHRS({
             sampleInterval: 10,
-            algorithm:      'Mahony',
+
+            //algorithm: 'Madgwick',
             //beta:           0.8,
-             kp:             0.9,
-             ki:             0
+
+            algorithm: 'Mahony',
+            kp:        0.1,
+            ki:        0
         });
+
+        this.azimuth            = 0;
+        this.lastAzimuth        = 0;
+        this.azimuthLifetime    = 60;
+        this.azimuthLifetimeMax = 60;
+
+        this.lastRollYawPitch = [
+            0,
+            0,
+            0,
+        ];
 
         this.lastTimestamp = 0;
 
@@ -270,8 +284,27 @@ class ControllerDisplay {
 
 
         const {heading, pitch, roll} = this.ahrs.getEulerAngles();
+
         // todo: Figure out how to better compensate for drift!
-        this.gearVRController.rotation.set(roll, heading, pitch, 'XZY');
+
+        // this.azimuthLifetime--;
+        // if (this.azimuthLifetime < 0 || this.azimuth === 0) {
+        //     this.azimuthLifetime = this.azimuthLifetimeMax;
+        //
+        //     this.log('Azimuth reset!' + new Date());
+        //     this.azimuth = Math.atan2(data.magY, data.magX);
+        // }
+
+        if (data.homeButton) {
+            this.lastRollYawPitch = [roll, heading, pitch];
+        }
+
+        this.gearVRController.rotation.set(
+            roll - this.lastRollYawPitch[0],
+            heading - this.lastRollYawPitch[1],
+            -pitch + this.lastRollYawPitch[2],
+            'XZY'
+        );
     }
 
     onClickDeviceActionButton() {

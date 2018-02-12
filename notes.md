@@ -164,4 +164,8 @@ Calibration code for sensor fusion...
 - https://github.com/kriswiner
 - https://learn.adafruit.com/ahrs-for-adafruits-9-dof-10-dof-breakout/magnetometer-calibration
 - http://www.pieter-jan.com/node/11
+- https://github.com/kriswiner/MPU6050/wiki/affordable-9-dof-sensor-fusion
+- https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
+
+
 

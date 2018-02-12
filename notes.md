@@ -1,3 +1,104 @@
+Bluetooth Probing
+
+LightBlue Bluetooth Device Discovery app
+https://itunes.apple.com/us/app/lightblue/id639944780?mt=12
+
+Writing driver for daydream controller
+https://hackernoon.com/how-i-hacked-google-daydream-controller-c4619ef318e4
+https://www.npmjs.com/package/node-web-bluetooth
+
+Use LightBlue to identify the device
+When re-pairing, you will need to remove the Device profile from the OSX Bluetooth settings window
+
+GATT = Generic Attribute Profile = how 2 Bluetooth LE devices transfer data
+Only 1 device can be connected at a time
+
+Services
+    Characteristic
+
+180F
+    2A19
+
+180A
+    2A29
+    2A24
+    2A25
+    2A27
+    2A26
+    2A28
+    2A50
+
+1879
+    2A4E
+    2A4B
+    2A4A
+    2A4C
+    2A4D
+    2A22
+    2A32
+
+4F63756C-7573-2054-6872-65656D6F7465
+    C8C51726-81BC-483B-A052-F7A14EA3D281
+    C8C51726-81BC-483B-A052-F7A14EA3D282
+FEF5
+    8082CAA8-41A6-4021-91C6-56F9B954CC34
+    724249F0-5EC3-4B5F-8804-42345AF08651
+    6C53DB25-47A1-45FE-A022-7C92FB334FD4
+    9D8489A3-000C-49D8-9183-855B673FDA31
+    457871E8-D516-4CA1-9116-57D0B17B9CB2
+    5F78DF94-798C-46F5-990A-B3EB6A065C88
+    61C8849C-F639-4765-946E-5C3419BEBB2A
+    64B4E8B5-0DE5-401B-A21D-ACC8DB3B913A
+    42C3DFDD-77BE-4D9C-8454-8F875267FB3B 
+    B7DE1EEA-823D-43BB-A3AF-C4903DFCE23C
+
+---
+
+Gear VR Input Service APK
+Download the "com.samsung.android.app.vr.input.service" (Gear VR Input Service) APK 
+
+https://www.apkmirror.com/apk/samsung-electronics-co-ltd/gear-vr-inputservice/gear-vr-inputservice-1-0-44-release/gear-vr-inputservice-1-0-44-android-apk-download/
+
+Opening up com.samsung.android.app.vr.input.service (APK expanded with apktool https://ibotpeaches.github.io/Apktool/documentation/)
+
+You can get SMALI files which is Dalvik human-readable bytecode. Code in this format can be manipulated and repacked into an APK.
+
+Decompilation
+
+Rename a copy of the APK to APK.TAR (an APK is also a TAR archive) and extract. Then grab classes.dex and use https://github.com/pxb1988/dex2jar to break it down into a JAR file that JD-GUI is able to decompile.
+
+JD-GUI: https://github.com/java-decompiler/jd-gui
+
+Overall APK class structures
+ClassyShark to see the classes and methods as well as all strings
+http://classyshark.com/
+https://github.com/google/android-classyshark
+
+java -jar ClassyShark.jar -open com.samsung.android.app.vr.input.service.apk
+
+
+Certificates found
+https://iot.stackexchange.com/questions/19/how-do-i-secure-communication-between-app-and-iot-device (likely uses a scheme close to this)
+Protocol uses 2 X.509 certs for the device to verify it is talking to the right application.
+    certs/occulus.cert
+    certs/samsung.cert
+
+Getting the certificate information:
+(DER is the binary format)
+    openssl x509 -inform DER -text -noout -in certs/samsung.crt
+    openssl x509 -inform DER -text -noout -in certs/oculus.crt
+
+These certs are means of conveyance for _vendor public keys_. A device that has these certs installed will be able to verify software updates are coming from either Samsung or Oculus.
+https://security.stackexchange.com/questions/31139/how-x509-certificates-are-used-for-encryption
+
+Names?
+HMT term used throughout —> this is referring to "HelMeT"? The Gear VR headset?
+
+gb2111 =  walkinvrdriver@gmail.com
+https://github.com/gb2111/Access-GearVR-Controller-from-PC
+
+----
+
 Using [JD-GUI](http://jd.benow.ca/) ([source](https://github.com/java-decompiler/jd-gui)) on decompiled APK 
 (com.samsung.android.app.vr.input.service-dex2jar.jar)
 
